@@ -1,17 +1,20 @@
-import sqlite3 as sql # Importing the library to use database
+import sqlite3 as sql
 
-# Creating database and table for storage.
+# Connect to database
 conn = sql.connect('Database.db')
 curr = conn.cursor()
+
+# Create table
 curr.execute('''
-             CREATE TABLE IF NOT EXISTS
-             expense(
-             categories varchar(50),
-             amount int(20),
-             description varchar(50))
-             ''')
+    CREATE TABLE IF NOT EXISTS expense (
+        categories VARCHAR(50),
+        amount INT,
+        description VARCHAR(50)
+    )
+''')
 conn.commit()
-# Fucntion to list all category
+
+# Function to list all categories
 def list_category():
     curr.execute("SELECT DISTINCT categories FROM expense")
     categories = curr.fetchall()
@@ -19,66 +22,60 @@ def list_category():
     for cat in categories:
         print(f"- {cat[0]}")
 
-# Function to add expense
-def add_expense(category,amount,description):
-    # Adding expense in Database
-    curr.execute('''INSERT INTO expense(categories,amount,decription) VALUES (?,?,?)'''(category,amount,description))
+# Function to add an expense
+def add_expense(category, amount, description):
+    curr.execute('''INSERT INTO expense (categories, amount, description) VALUES (?, ?, ?)''',
+                 (category, amount, description))
     conn.commit()
-    print('Expense Added Successfully')# Notice for successful transaction
+    print('Expense Added Successfully')
 
-# Fucntion to check categories wise expenses
+# Function to show category-wise expenses
 def cat_expense():
-    curr.execute('''SELECT sum(amount) FROM expense GROUP BY categories''')
+    curr.execute('''SELECT categories, SUM(amount) FROM expense GROUP BY categories''')
     expense = curr.fetchall()
-    print(expense)
-
+    print("Category-wise Expense:")
+    for cat, total in expense:
+        print(f"{cat}: ₹{total}")
 
 # Function to check total expense
 def total_expense():
-    curr.execute('''SELCET sum(amount) FROM expense''')
-    amount = curr.fetchall()
-    print(f'Total expense: {amount}')
+    curr.execute('''SELECT SUM(amount) FROM expense''')
+    amount = curr.fetchone()[0]
+    print(f'Total expense: ₹{amount if amount else 0}')
 
-
-# Main function which will the start point of the app
+# Main function
 def main():
-    print('Welcome to Expense Manger')
-    print('''
-    How would you like to Proceed
-        1. Check Total Expense
-        2. Categories Wise Expense
-        3. Add new Expense 
-        4. List all categories
-        5. Exit the Application
-''')# Welcome Notice 
-    
-    command = int(input('Enter Your Transaction number')) # Input of the user
-    try:
-        # Task verification
-        if command==1:
-            total_expense()
+    while True:
+        print('''
+Welcome to Expense Manager
 
-        elif command==2:
-            cat_expense()
-
-        elif command==3:
-            category = input('Enter in which category you want to enter')
-            amount = int(input('Enter the amout you want to enter'))
-            description = input('Give the description of the expense')
-            add_expense(category,amount,description)
-
-        elif command==4:
-            list_category()
-
-        elif command==5:
-            print('Thanks For using us....')
-
-        else:
-            print('Invalid Input Please check the input and proceed')
-            main()
-    except ValueError:
-        print('Value error enter a valid value')
-
+How would you like to proceed?
+    1. Check Total Expense
+    2. Category-wise Expense
+    3. Add New Expense 
+    4. List All Categories
+    5. Exit the Application
+''')
+        try:
+            command = int(input('Enter your option: '))
+            if command == 1:
+                total_expense()
+            elif command == 2:
+                cat_expense()
+            elif command == 3:
+                category = input('Enter the category: ')
+                amount = int(input('Enter the amount: '))
+                description = input('Enter the description: ')
+                add_expense(category, amount, description)
+            elif command == 4:
+                list_category()
+            elif command == 5:
+                print('Thanks for using Expense Manager. Goodbye!')
+                break
+            else:
+                print('Invalid input. Please try again.')
+        except ValueError:
+            print('Value error: Enter a valid number.')
 
 if __name__ == '__main__':
     main()
